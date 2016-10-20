@@ -199,7 +199,7 @@ static uint32 idle_loop_target_pc;
 static bool8 idle_loop_elimination_enable;
 
 #ifdef LAGFIX
-bool8 finishedFrame = false;
+bool8 finishedFrame = FALSE;
 #endif
 
 void S9xMainLoop (void)
@@ -323,7 +323,7 @@ void S9xMainLoop (void)
         }
         else
         {
-            finishedFrame = false;
+            finishedFrame = FALSE;
             break;
         }
     }while(!finishedFrame);
@@ -443,7 +443,7 @@ static void S9xEndScreenRefresh (void)
     {
 		S9xDeinitUpdate(IPPU.RenderedScreenWidth, IPPU.RenderedScreenHeight);
 #ifdef LAGFIX
-		finishedFrame = true;
+		finishedFrame = TRUE;
 #endif
     }
 
@@ -942,7 +942,7 @@ static uint8 S9xDoHDMA (uint8 byte)
 	return (byte);
 }
 
-bool8 usingsfx = FALSE;
+bool8 superfxcpu = FALSE;
 
 void S9xDoHEventProcessing (void)
 {
@@ -972,9 +972,8 @@ void S9xDoHEventProcessing (void)
 			if (Settings.SuperFX && !SuperFX.oneLineDone && CHECK_EXEC_SUPERFX())
          {
             //start superfx
-            queuefunction(S9xSuperFXExec);
-            run_cuttle();
-            usingsfx = TRUE;
+            superfxGO();
+            superfxcpu = TRUE;
          }
          
          S9xAPUExecute();
@@ -1057,7 +1056,7 @@ void S9xDoHEventProcessing (void)
 
 			if (CPU.V_Counter == PPU.ScreenHeight + FIRST_VISIBLE_LINE) /* VBlank starts from V=225(240). */
 			{
-				S9xEndScreenRefresh();
+            S9xEndScreenRefresh();
 					
 				PPU.HDMA = 0;
 				/* Bits 7 and 6 of $4212 are computed when read in S9xGetPPU. */
@@ -1130,7 +1129,8 @@ void S9xDoHEventProcessing (void)
 
 				PPU.MosaicStart = 0;
 				PPU.RecomputeClipWindows = TRUE;
-				IPPU.PreviousLine = IPPU.CurrentLine = 0;
+            IPPU.PreviousLine = 0;
+            IPPU.CurrentLine = 0;
 
 				memset(GFX.ZBuffer, 0, GFX.ScreenSize);
 				memset(GFX.SubZBuffer, 0, GFX.ScreenSize);
@@ -1138,11 +1138,10 @@ void S9xDoHEventProcessing (void)
 
 			CPU.NextEvent = -1;
 			S9xReschedule();
-
-         if(usingsfx){
-            //rejoin superfx
-            wait_cuttle();
-            usingsfx = FALSE;
+         
+         if(superfxcpu){
+            superfxcpu = FALSE;
+            superfxWAIT();
          }
          
 			break;

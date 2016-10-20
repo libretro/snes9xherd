@@ -3,54 +3,72 @@
 #include <retro_miscellaneous.h>
 #include "snes9x.h"
 #include "fxemu.h"
+#include "apu.h"
 
-static sthread_t* cuttlefishthread;
-static int keeprunning;
-static ssem_t* cuttle_start;
-static ssem_t* cuttle_done;
+static int keeprunning;//used to terminate all threads
 
-static void (*tasks[50])();
-static int remainingtasks;
-
-static void cuttlelikeafish(void* unusedpointer){
+static sthread_t* superfxthread;
+static ssem_t* superfx_start;
+static ssem_t* superfx_done;
+static void runsuperfx(void* unusedpointer){
    while(1){
-      ssem_wait(cuttle_start);
+      ssem_wait(superfx_start);
       if(!keeprunning)break;
-      while(remainingtasks >= 0){
-         tasks[remainingtasks]();
-         remainingtasks--;
-      }
-      ssem_signal(cuttle_done);
+      S9xSuperFXExec();
+      ssem_signal(superfx_done);
+   }
+}
+
+static sthread_t* aputhread;
+static ssem_t* apu_start;
+static ssem_t* apu_done;
+static void runapu(void* unusedpointer){
+   while(1){
+      ssem_wait(apu_start);
+      if(!keeprunning)break;
+      S9xAPUExecute();
+      ssem_signal(apu_done);
    }
 }
 
 int initthreads(){
-   remainingtasks = -1;
    keeprunning = 1;
-   cuttlefishthread = sthread_create(cuttlelikeafish,NULL);
-   cuttle_start = ssem_new(0);
-   cuttle_done = ssem_new(0);
-   return !cuttlefishthread || !cuttle_start || !cuttle_done;
+   
+   superfx_start  = ssem_new(0);
+   superfx_done  = ssem_new(0);
+   if(!superfx_start || !superfx_done)return FALSE;
+   superfxthread = sthread_create(runsuperfx,NULL);
+   if(!superfxthread)return FALSE;
+   
+   apu_start  = ssem_new(0);
+   apu_done  = ssem_new(0);
+   if(!apu_start || !apu_done)return FALSE;
+   aputhread = sthread_create(runapu,NULL);
+   if(!aputhread)return FALSE;
+   
+   return TRUE;
 }
 
 void stopthreads(){
-   remainingtasks = -1;
    keeprunning = 0;
-   ssem_signal(cuttle_start);
-   sthread_join(cuttlefishthread);
-   ssem_free(cuttle_start);
-   ssem_free(cuttle_done);
+   ssem_signal(superfx_start);
+   ssem_signal(apu_start);
+   sthread_join(superfxthread);
+   sthread_join(aputhread);
 }
 
-void run_cuttle(){
-   ssem_signal(cuttle_start);
+void superfxGO(){
+   ssem_signal(superfx_start);
 }
 
-void wait_cuttle(){
-   ssem_wait(cuttle_done);
+void superfxWAIT(){
+   ssem_wait(superfx_done);
 }
 
-void queuefunction(void (*func)(void)){
-   remainingtasks++;
-   tasks[remainingtasks] = func;
+void apuGO(){
+   ssem_signal(apu_start);
+}
+
+void apuWAIT(){
+   ssem_wait(apu_done);
 }

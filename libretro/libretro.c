@@ -1046,7 +1046,7 @@ bool retro_load_game(const struct retro_game_info *game)
       return FALSE;
    }
 
-   if(initthreads())return FALSE;
+   if(!initthreads())return FALSE;
 
    check_variables();
 
