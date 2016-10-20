@@ -12,8 +12,8 @@ SOURCES_C := $(CORE_DIR)/src/apu.c \
 	$(CORE_DIR)/src/cpuexec.c \
 	$(CORE_DIR)/src/dsp.c \
 	$(CORE_DIR)/src/fxemu.c \
-	$(CORE_DIR)/src/herdfx.c \
 	$(CORE_DIR)/src/globals.c \
+	$(CORE_DIR)/src/herd.c \
 	$(CORE_DIR)/src/memmap.c \
 	$(CORE_DIR)/src/obc1.c \
 	$(CORE_DIR)/src/ppu.c \

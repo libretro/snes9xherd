@@ -202,8 +202,8 @@
 #include "../src/cheats.h"
 #include "../src/display.h"
 
-//use hosts 2nd-8th cpu if avalible as the super fx(snes in-cart gpu)
-#include "../src/herdfx.h"
+//use hosts 2nd-8th cpu if avalible
+#include "../src/herd.h"
 
 #define LR_MAP_BUTTON(id, name) S9xMapButton((id), S9xGetCommandT((name)))
 #define MAKE_BUTTON(pad, btn) (((pad)<<4)|(btn))
@@ -666,8 +666,7 @@ void retro_init (void)
 
 void retro_deinit(void)
 {
-   if(Settings.SuperFX == TRUE)
-      stopSFXcuttlefish();//multithreading
+   stopthreads();
    S9xDeinitAPU();
    Deinit();
    S9xGraphicsDeinit();
@@ -1046,10 +1045,8 @@ bool retro_load_game(const struct retro_game_info *game)
          environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, (void*)&msg);
       return FALSE;
    }
-   
-   if(Settings.SuperFX == TRUE){
-      if(startSFXcuttlefish())return FALSE;//multithreading
-   }
+
+   if(initthreads())return FALSE;
 
    check_variables();
 

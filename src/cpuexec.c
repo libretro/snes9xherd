@@ -189,8 +189,8 @@
 #include "cheats.h"
 #include "snapshot.h"
 
-//use hosts 2nd-8th cpu if avalible as the super fx(snes in-cart gpu)
-#include "herdfx.h"
+//use hosts 2nd-8th cpu if avalible
+#include "herd.h"
 
 extern struct SLineData		LineData[240];
 extern struct SLineMatrixData	LineMatrixData[240];
@@ -972,7 +972,8 @@ void S9xDoHEventProcessing (void)
 			if (Settings.SuperFX && !SuperFX.oneLineDone && CHECK_EXEC_SUPERFX())
          {
             //start superfx
-            sfxrun_cuttle();
+            queuefunction(S9xSuperFXExec);
+            run_cuttle();
             usingsfx = TRUE;
          }
          
@@ -1053,14 +1054,6 @@ void S9xDoHEventProcessing (void)
 
 			if (PPU.HTimerPosition == 0)
 				S9xCheckMissingHTimerPosition();
-         
-         /*
-         if(usingsfx){
-            //rejoin superfx
-            waitforcuttler();
-            usingsfx = FALSE;
-         }
-         */
 
 			if (CPU.V_Counter == PPU.ScreenHeight + FIRST_VISIBLE_LINE) /* VBlank starts from V=225(240). */
 			{
@@ -1148,7 +1141,7 @@ void S9xDoHEventProcessing (void)
 
          if(usingsfx){
             //rejoin superfx
-            sfxwait_cuttle();
+            wait_cuttle();
             usingsfx = FALSE;
          }
          
