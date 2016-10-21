@@ -676,12 +676,10 @@ static uint8 S9xDoHDMA (uint8 byte)
 	uint16	IAddr;
 	bool8	temp;
 	int32	tmpch;
-	int d;
+	int d = 0;
 	struct SDMA *p;
 
 	p = &DMA[0];
-
-	d = 0;
 
 	CPU.InHDMA = TRUE;
 	CPU.InDMAorHDMA = TRUE;
@@ -975,10 +973,13 @@ void S9xDoHEventProcessing (void)
             superfxGO();
             superfxcpu = TRUE;
          }
+         apuGO();
          
+         /*
          S9xAPUExecute();
          CPU.Cycles -= Timings.H_Max;
          S9xAPUSetReferenceTime(CPU.Cycles);
+         */
 			SuperFX.oneLineDone = FALSE; // do this even without SFX
 
 
@@ -1143,6 +1144,10 @@ void S9xDoHEventProcessing (void)
             superfxcpu = FALSE;
             superfxWAIT();
          }
+         
+         apuWAIT();
+         CPU.Cycles -= Timings.H_Max;
+         S9xAPUSetReferenceTime(CPU.Cycles);
          
 			break;
 
