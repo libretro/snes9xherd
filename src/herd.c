@@ -1,4 +1,5 @@
 #include <rthreads/rthreads.h>
+#include <rthreads/rsemaphore.h>
 #include <retro_miscellaneous.h>
 #include "snes9x.h"
 #include "fxemu.h"
@@ -7,67 +8,67 @@
 static int keeprunning;//used to terminate all threads
 
 static sthread_t* superfxthread;
-static slock_t* sfxmutex;
+static ssem_t* superfx_start;
+static ssem_t* superfx_done;
 static void runsuperfx(void* unusedpointer){
    while(1){
-      slock_lock(sfxmutex);
+      ssem_wait(superfx_start);
       if(!keeprunning)break;
       S9xSuperFXExec();
-      slock_unlock(sfxmutex);
+      ssem_signal(superfx_done);
    }
 }
 
 static sthread_t* aputhread;
-static slock_t* apumutex;
+static ssem_t* apu_start;
+static ssem_t* apu_done;
 static void runapu(void* unusedpointer){
    while(1){
-      slock_lock(apumutex);
+      ssem_wait(apu_start);
       if(!keeprunning)break;
       S9xAPUExecute();
-      slock_unlock(apumutex);
+      ssem_signal(apu_done);
    }
 }
 
 int initthreads(){
    keeprunning = 1;
-
-   sfxmutex = slock_new();
-   if(!sfxmutex)return FALSE;
-   slock_lock(sfxmutex);
+   
+   superfx_start  = ssem_new(0);
+   superfx_done  = ssem_new(0);
+   if(!superfx_start || !superfx_done)return FALSE;
    superfxthread = sthread_create(runsuperfx,NULL);
    if(!superfxthread)return FALSE;
    
-   apumutex = slock_new();
-   if(!apumutex)return FALSE;
-   slock_lock(apumutex);
+   apu_start  = ssem_new(0);
+   apu_done  = ssem_new(0);
+   if(!apu_start || !apu_done)return FALSE;
    aputhread = sthread_create(runapu,NULL);
    if(!aputhread)return FALSE;
-
+   
    return TRUE;
 }
 
 void stopthreads(){
    keeprunning = 0;
-   slock_unlock(sfxmutex);
-   slock_unlock(sfxmutex);
+   ssem_signal(superfx_start);
+   ssem_signal(apu_start);
    sthread_join(superfxthread);
    sthread_join(aputhread);
-   slock_free(sfxmutex);
-   slock_free(apumutex);
 }
 
 void superfxGO(){
-   slock_unlock(sfxmutex);
+   ssem_signal(superfx_start);
 }
 
 void superfxWAIT(){
-   slock_lock(sfxmutex);
+   ssem_wait(superfx_done);
 }
 
 void apuGO(){
-   slock_unlock(apumutex);
+   ssem_signal(apu_start);
 }
 
 void apuWAIT(){
-   slock_lock(apumutex);
+   ssem_wait(apu_done);
 }

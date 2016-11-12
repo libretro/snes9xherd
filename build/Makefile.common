@@ -31,6 +31,7 @@ ifeq ($(STATIC_LINKING),1)
 else
 SOURCES_C += $(CORE_DIR)/libretro/libretro-common/streams/memory_stream.c
 SOURCES_C += $(CORE_DIR)/libretro/libretro-common/rthreads/rthreads.c
+SOURCES_C += $(CORE_DIR)/libretro/libretro-common/rthreads/rsemaphore.c
 endif
 
 endif
