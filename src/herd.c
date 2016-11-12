@@ -48,15 +48,8 @@ int initthreads(){
 
 void stopthreads(){
    keeprunning = 0;
-   
-   //wait for threads to finish there current iteration
-   slock_lock(sfxmutex);
-   slock_lock(apumutex);
-   
-   //threads are now done,call them one last time to tell them to exit
    slock_unlock(sfxmutex);
-   slock_unlock(apumutex);
-   
+   slock_unlock(sfxmutex);
    sthread_join(superfxthread);
    sthread_join(aputhread);
    slock_free(sfxmutex);
